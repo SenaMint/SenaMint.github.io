@@ -1,0 +1,77 @@
+---
+const navItems = [
+  {
+    label: '風景',
+    children: [
+      { label: '春', href: '/landscape/spring' },
+      { label: '夏', href: '/landscape/summer' },
+      { label: '秋', href: '/landscape/autumn' },
+      { label: '冬', href: '/landscape/winter' },
+    ],
+  },
+  {
+    label: '水族館',
+    children: [
+      { label: 'hoge', href: '/aquarium/hoge' },
+      { label: 'fuga', href: '/aquarium/fuga' },
+    ],
+  },
+];
+---
+
+<nav aria-label="Global navigation">
+  <ul class="flex items-center justify-center gap-16">
+    {navItems.map((item) => (
+      <li class="relative">
+        <details class="group relative">
+          <summary class="flex cursor-pointer list-none items-center gap-2 py-3 text-[15px] font-medium tracking-[0.08em] text-gray-900 dark:text-white transition hover:text-black dark:hover:text-gray-200">
+            <span>{item.label}</span>
+            <svg
+              class="h-4 w-4 text-zinc-500 transition group-open:rotate-180"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </summary>
+
+          <div class="absolute left-1/2 top-full z-50 w-40 -translate-x-1/2 mt-1">
+            <ul class="rounded-lg bg-white/80 dark:bg-gray-800/80 p-2 shadow-md shadow-black/5 backdrop-blur">
+              {item.children.map((child) => (
+                <li>
+                  <a
+                    href={child.href}
+                    class="block rounded-md px-3 py-2 text-sm text-gary-900 dark:text-white transition hover:bg-gray-100/80 dark:hover:bg-gray-700/80 hover:text-black dark:hover:text-gray-200"
+                  >
+                    {child.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<script>
+  const menus = document.querySelectorAll("nav details");
+
+  menus.forEach(menu => {
+    menu.addEventListener("toggle", () => {
+      if (menu.open) {
+        menus.forEach(other => {
+          if (other !== menu) {
+            other.removeAttribute("open");
+          }
+        });
+      }
+    });
+  });
+</script>
