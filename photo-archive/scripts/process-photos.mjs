@@ -19,6 +19,7 @@ import { fileURLToPath } from 'url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
 const PUBLIC_PHOTOS_DIR = join(ROOT, 'public', 'photos');
+const FEATURED_DIR = join(ROOT, 'public', 'featured');
 const DATA_DIR = join(ROOT, 'src', 'data');
 
 const THUMBNAIL_WIDTH = 600;
@@ -178,6 +179,49 @@ async function main() {
 
   console.log(`\n✅ 完了: ${allPhotos.length}枚 / エラー: ${totalErrors}件`);
   console.log(`📄 src/data/photos.json を更新しました`);
+
+  // featured/ の処理
+  await processFeatured();
+}
+
+// public/featured/ の画像を Web 最適化して src/data/featured.json を生成
+async function processFeatured() {
+  let featuredFiles = [];
+  try {
+    featuredFiles = await getImageFiles(FEATURED_DIR);
+  } catch {
+    return; // フォルダが無ければスキップ
+  }
+
+  if (featuredFiles.length === 0) return;
+
+  console.log(`\n🌟 featured (${featuredFiles.length}枚)`);
+
+  const displayDir = join(FEATURED_DIR, 'display');
+  await mkdir(displayDir, { recursive: true });
+
+  const featuredPhotos = [];
+  for (const file of featuredFiles) {
+    const ext = extname(file).toLowerCase();
+    const nameSlug = slugify(basename(file, ext));
+    const dest = join(displayDir, `${nameSlug}.webp`);
+
+    process.stdout.write(`  → ${basename(file)} ... `);
+    try {
+      await sharp(file)
+        .resize(2560, null, { withoutEnlargement: true })
+        .webp({ quality: 85 })
+        .toFile(dest);
+      featuredPhotos.push({ src: `/featured/display/${nameSlug}.webp` });
+      console.log('✓');
+    } catch (err) {
+      console.log(`✗ ${err.message}`);
+    }
+  }
+
+  const featuredPath = join(DATA_DIR, 'featured.json');
+  await writeFile(featuredPath, JSON.stringify({ photos: featuredPhotos }, null, 2), 'utf-8');
+  console.log(`📄 src/data/featured.json を更新しました`);
 }
 
 main().catch(err => {

@@ -14,8 +14,45 @@ const { photos } = Astro.props;
     写真がまだありません。
   </p>
 ) : (
-  <div class="masonry-grid" id="photo-grid">
-    {photos.map(photo => <PhotoCard photo={photo} />)}
+  <div>
+    <div class="masonry-grid" id="photo-grid">
+      {photos.map(photo => <PhotoCard photo={photo} />)}
+    </div>
+
+    <!-- フィルターで0件になったときの空表示 -->
+    <div id="no-results" class="hidden flex-col items-center justify-center py-24 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 160 140"
+        fill="none"
+        class="w-28 h-28 mb-6 text-gray-300 dark:text-gray-600"
+        aria-hidden="true"
+      >
+        <!-- カメラ本体 -->
+        <rect x="18" y="48" width="124" height="84" rx="10" fill="currentColor" opacity="0.35"/>
+        <!-- ビューファインダー -->
+        <rect x="48" y="34" width="36" height="18" rx="5" fill="currentColor" opacity="0.35"/>
+        <!-- フラッシュ -->
+        <rect x="108" y="36" width="22" height="13" rx="3" fill="currentColor" opacity="0.25"/>
+        <!-- レンズ外枠 -->
+        <circle cx="80" cy="90" r="32" fill="currentColor" opacity="0.25"/>
+        <!-- レンズ内 -->
+        <circle cx="80" cy="90" r="21" fill="currentColor" opacity="0.35"/>
+        <!-- レンズ中心 -->
+        <circle cx="80" cy="90" r="12" fill="currentColor" opacity="0.45"/>
+        <!-- 目（左） -->
+        <circle cx="74" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
+        <!-- 目（右） -->
+        <circle cx="86" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
+        <!-- 口（への字） -->
+        <path d="M73 97 Q80 92 87 97" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+        <!-- 涙 -->
+        <ellipse cx="71" cy="92" rx="2.5" ry="4" fill="#93C5FD" opacity="0.8"/>
+      </svg>
+
+      <p class="text-lg font-medium text-gray-500 dark:text-gray-400">写真がまだありません</p>
+      <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">申し訳ありません 🙇</p>
+    </div>
   </div>
 )}
 
@@ -26,19 +63,23 @@ const { photos } = Astro.props;
   }
 
   @media (min-width: 640px) {
-    .masonry-grid {
-      columns: 2;
-    }
+    .masonry-grid { columns: 2; }
   }
 
   @media (min-width: 1024px) {
-    .masonry-grid {
-      columns: 3;
-    }
+    .masonry-grid { columns: 3; }
   }
 
   .masonry-item {
     break-inside: avoid;
     margin-bottom: 1rem;
+  }
+
+  #no-results {
+    display: none;
+  }
+
+  #no-results.visible {
+    display: flex;
   }
 </style>

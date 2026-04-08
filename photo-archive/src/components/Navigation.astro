@@ -30,7 +30,7 @@ const { items } = navData;
               {item.children.map((child) => (
                 <li>
                   <a
-                    href={`/?filter=${child.filterKey}`}
+                    href={`/gallery/?filter=${child.filterKey}`}
                     class="block rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white transition hover:bg-gray-100/80 dark:hover:bg-gray-700/80 hover:text-black dark:hover:text-gray-200"
                   >
                     {child.label}
@@ -52,9 +52,7 @@ const { items } = navData;
     menu.addEventListener('toggle', () => {
       if ((menu as HTMLDetailsElement).open) {
         menus.forEach(other => {
-          if (other !== menu) {
-            other.removeAttribute('open');
-          }
+          if (other !== menu) other.removeAttribute('open');
         });
       }
     });
