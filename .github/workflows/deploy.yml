@@ -1,8 +1,8 @@
 name: Deploy Astro site to GitHub Pages
 
 on:
-  push:
-    branches: [main]
+  # 自動デプロイは無効化。ローカルでビルド・デプロイを行う（画像はgit管理外のため）
+  # 手動実行は: GitHub Actions → Run workflow
   workflow_dispatch:
 
 permissions:

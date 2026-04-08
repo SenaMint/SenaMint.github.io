@@ -23,5 +23,13 @@ pnpm-debug.log*
 # 元画像（gitignore - 重いため）
 source-photos/
 
+# 生成された画像ファイル（git管理外・ローカルビルド時に生成）
+public/photos/
+public/featured/
+
+# 生成されたメタデータJSON（git管理外・process-photosで生成）
+src/data/photos.json
+src/data/featured.json
+
 # jetbrains setting folder
 .idea/

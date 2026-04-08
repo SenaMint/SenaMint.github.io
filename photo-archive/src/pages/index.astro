@@ -1,9 +1,13 @@
 ---
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import featuredData from '../data/featured.json';
 import siteData from '../data/site.json';
 
-const { photos: featured } = featuredData;
+const featuredJsonPath = resolve('src/data/featured.json');
+const featured: { src: string }[] = existsSync(featuredJsonPath)
+  ? JSON.parse(readFileSync(featuredJsonPath, 'utf-8')).photos ?? []
+  : [];
 const { name, bio, sns } = siteData;
 
 // SNS アイコン SVG パス
