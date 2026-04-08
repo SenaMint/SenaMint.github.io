@@ -1,0 +1,9 @@
+{
+  "name": "SenaMint",
+  "bio": "趣味で写真を撮っています。\n風景や水族館が好きです。",
+  "sns": [
+    { "label": "GitHub", "url": "https://github.com/SenaMint", "icon": "github" },
+    { "label": "X", "url": "https://x.com/SenaMint", "icon": "x" },
+    { "label": "Instagram", "url": "https://www.instagram.com/SenaMint/", "icon": "instagram" }
+  ]
+}

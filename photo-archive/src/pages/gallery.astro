@@ -1,0 +1,130 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PhotoGrid from '../components/PhotoGrid.astro';
+import PhotoModal from '../components/PhotoModal.astro';
+import photosData from '../data/photos.json';
+import navData from '../data/nav.json';
+import type { Photo } from '../types';
+
+const photos = photosData.photos as Photo[];
+
+// nav.json から filterKey → 表示ラベルのマップを作成
+const filterLabels: Record<string, string> = {};
+navData.items.forEach(item => {
+  item.children.forEach(child => {
+    filterLabels[child.filterKey] = `${item.label} / ${child.label}`;
+  });
+});
+
+// 写真に含まれる filterKey のみ表示
+const activeFilterKeys = [...new Set(photos.map(p => p.filterKey))].sort();
+---
+
+<BaseLayout title="Gallery - SenaMint">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- フィルターボタン -->
+    {activeFilterKeys.length > 0 && (
+      <div class="flex gap-2 flex-wrap mb-8" id="filter-bar">
+        <button class="filter-btn" data-filter="all" aria-pressed="true">
+          すべて
+        </button>
+        {activeFilterKeys.map(key => (
+          <button class="filter-btn" data-filter={key} aria-pressed="false">
+            {filterLabels[key] ?? key}
+          </button>
+        ))}
+      </div>
+    )}
+
+    <PhotoGrid photos={photos} />
+    <PhotoModal />
+  </div>
+</BaseLayout>
+
+<style>
+  .filter-btn {
+    padding: 0.375rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    border: 1px solid rgb(209 213 219);
+    color: rgb(75 85 99);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover {
+    border-color: rgb(156 163 175);
+    color: rgb(17 24 39);
+  }
+
+  .filter-btn[aria-pressed="true"] {
+    background: rgb(17 24 39);
+    border-color: rgb(17 24 39);
+    color: white;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .filter-btn {
+      border-color: rgb(75 85 99);
+      color: rgb(156 163 175);
+    }
+
+    .filter-btn:hover {
+      border-color: rgb(156 163 175);
+      color: rgb(243 244 246);
+    }
+
+    .filter-btn[aria-pressed="true"] {
+      background: rgb(243 244 246);
+      border-color: rgb(243 244 246);
+      color: rgb(17 24 39);
+    }
+  }
+</style>
+
+<script>
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const items = document.querySelectorAll<HTMLElement>('.masonry-item');
+  const noResults = document.getElementById('no-results');
+  const grid = document.getElementById('photo-grid');
+
+  function applyFilter(filterKey: string) {
+    let visible = 0;
+
+    items.forEach(item => {
+      const match = filterKey === 'all' || item.dataset.filter === filterKey;
+      item.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    // 空状態の表示切り替え
+    if (noResults) {
+      noResults.classList.toggle('visible', visible === 0);
+    }
+    if (grid) {
+      grid.style.display = visible === 0 ? 'none' : '';
+    }
+  }
+
+  // URL パラメータで初期フィルター
+  const params = new URLSearchParams(location.search);
+  const initialFilter = params.get('filter') ?? 'all';
+
+  // 該当ボタンをアクティブに
+  filterBtns.forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.dataset.filter === initialFilter ? 'true' : 'false');
+  });
+
+  applyFilter(initialFilter);
+
+  // ボタンクリック
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      applyFilter(btn.dataset.filter!);
+    });
+  });
+</script>
