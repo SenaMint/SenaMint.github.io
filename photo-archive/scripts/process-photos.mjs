@@ -1,7 +1,7 @@
 /**
  * process-photos.mjs
  *
- * public/photos/{category}/{subcategory}/ 以下の元画像（JPEG 等）を処理して
+ * public/source-photos/{category}/{subcategory}/ 以下の元画像（JPEG 等）を処理して
  * - thumbnails/{slug}.webp  (サムネイル)
  * - display/{slug}.webp     (表示用 4K 画像)
  * - src/data/photos.json    (メタデータ)
@@ -18,8 +18,10 @@ import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
+const SOURCE_PHOTOS_DIR = join(ROOT, 'source-photos');
 const PUBLIC_PHOTOS_DIR = join(ROOT, 'public', 'photos');
-const FEATURED_DIR = join(ROOT, 'public', 'featured');
+const SOURCE_FEATURED_DIR = join(ROOT, 'source-photos-featured');
+const PUBLIC_FEATURED_DIR = join(ROOT, 'public', 'featured');
 const DATA_DIR = join(ROOT, 'src', 'data');
 
 const THUMBNAIL_WIDTH = 600;
@@ -120,11 +122,11 @@ async function main() {
   await mkdir(PUBLIC_PHOTOS_DIR, { recursive: true });
   await mkdir(DATA_DIR, { recursive: true });
 
-  const categories = await getSubdirs(PUBLIC_PHOTOS_DIR);
+  const categories = await getSubdirs(SOURCE_PHOTOS_DIR);
 
   if (categories.length === 0) {
-    console.log('public/photos/ にカテゴリフォルダが見つかりません。');
-    console.log('例: public/photos/landscape/autumn/ に画像を配置してください。');
+    console.log('source-photos/ にカテゴリフォルダが見つかりません。');
+    console.log('例: source-photos/landscape/autumn/ に画像を配置してください。');
     return;
   }
 
@@ -133,7 +135,7 @@ async function main() {
 
   for (const category of categories) {
     const categorySlug = slugify(category);
-    const categoryDir = join(PUBLIC_PHOTOS_DIR, category);
+    const categoryDir = join(SOURCE_PHOTOS_DIR, category);
     const subcategories = await getSubdirs(categoryDir);
 
     for (const sub of subcategories) {
@@ -184,11 +186,11 @@ async function main() {
   await processFeatured();
 }
 
-// public/featured/ の画像を Web 最適化して src/data/featured.json を生成
+// source-photos-featured/ の画像を Web 最適化して src/data/featured.json を生成
 async function processFeatured() {
   let featuredFiles = [];
   try {
-    featuredFiles = await getImageFiles(FEATURED_DIR);
+    featuredFiles = await getImageFiles(SOURCE_FEATURED_DIR);
   } catch {
     return; // フォルダが無ければスキップ
   }
@@ -197,7 +199,7 @@ async function processFeatured() {
 
   console.log(`\n🌟 featured (${featuredFiles.length}枚)`);
 
-  const displayDir = join(FEATURED_DIR, 'display');
+  const displayDir = join(PUBLIC_FEATURED_DIR, 'display');
   await mkdir(displayDir, { recursive: true });
 
   const featuredPhotos = [];

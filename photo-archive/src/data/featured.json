@@ -1,3 +1,13 @@
 {
-  "photos": []
+  "photos": [
+    {
+      "src": "/featured/display/img-2343-jpg.webp"
+    },
+    {
+      "src": "/featured/display/img-4764.webp"
+    },
+    {
+      "src": "/featured/display/img-7258.webp"
+    }
+  ]
 }

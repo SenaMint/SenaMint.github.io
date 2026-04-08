@@ -10,10 +10,16 @@
       ]
     },
     {
-      "label": "水族館",
+      "label": "電車",
       "children": [
-        { "label": "hoge", "filterKey": "aquarium-hoge" },
-        { "label": "fuga", "filterKey": "aquarium-fuga" }
+        { "label": "新幹線", "filterKey": "train-shinkansen" },
+        { "label": "在来線", "filterKey": "train-train" }
+      ]
+    },
+    {
+      "label": "飛行機",
+      "children": [
+        { "label": "羽田空港", "filterKey": "airplane-haneda"}
       ]
     }
   ]

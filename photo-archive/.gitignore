@@ -22,6 +22,7 @@ pnpm-debug.log*
 
 # 元画像（gitignore - 重いため）
 source-photos/
+source-photos-featured/
 
 # jetbrains setting folder
 .idea/
