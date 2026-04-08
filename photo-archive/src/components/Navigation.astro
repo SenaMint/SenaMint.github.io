@@ -1,27 +1,12 @@
 ---
-const navItems = [
-  {
-    label: '風景',
-    children: [
-      { label: '春', href: '/landscape/spring' },
-      { label: '夏', href: '/landscape/summer' },
-      { label: '秋', href: '/landscape/autumn' },
-      { label: '冬', href: '/landscape/winter' },
-    ],
-  },
-  {
-    label: '水族館',
-    children: [
-      { label: 'hoge', href: '/aquarium/hoge' },
-      { label: 'fuga', href: '/aquarium/fuga' },
-    ],
-  },
-];
+import navData from '../data/nav.json';
+
+const { items } = navData;
 ---
 
 <nav aria-label="Global navigation">
   <ul class="flex items-center justify-center gap-16">
-    {navItems.map((item) => (
+    {items.map((item) => (
       <li class="relative">
         <details class="group relative">
           <summary class="flex cursor-pointer list-none items-center gap-2 py-3 text-[15px] font-medium tracking-[0.08em] text-gray-900 dark:text-white transition hover:text-black dark:hover:text-gray-200">
@@ -45,8 +30,8 @@ const navItems = [
               {item.children.map((child) => (
                 <li>
                   <a
-                    href={child.href}
-                    class="block rounded-md px-3 py-2 text-sm text-gary-900 dark:text-white transition hover:bg-gray-100/80 dark:hover:bg-gray-700/80 hover:text-black dark:hover:text-gray-200"
+                    href={`/?filter=${child.filterKey}`}
+                    class="block rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white transition hover:bg-gray-100/80 dark:hover:bg-gray-700/80 hover:text-black dark:hover:text-gray-200"
                   >
                     {child.label}
                   </a>
@@ -61,14 +46,14 @@ const navItems = [
 </nav>
 
 <script>
-  const menus = document.querySelectorAll("nav details");
+  const menus = document.querySelectorAll('nav details');
 
   menus.forEach(menu => {
-    menu.addEventListener("toggle", () => {
-      if (menu.open) {
+    menu.addEventListener('toggle', () => {
+      if ((menu as HTMLDetailsElement).open) {
         menus.forEach(other => {
           if (other !== menu) {
-            other.removeAttribute("open");
+            other.removeAttribute('open');
           }
         });
       }

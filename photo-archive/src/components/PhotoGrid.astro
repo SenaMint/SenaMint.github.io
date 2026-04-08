@@ -1,0 +1,44 @@
+---
+import type { Photo } from '../types';
+import PhotoCard from './PhotoCard.astro';
+
+interface Props {
+  photos: Photo[];
+}
+
+const { photos } = Astro.props;
+---
+
+{photos.length === 0 ? (
+  <p class="text-center text-gray-400 dark:text-gray-500 py-24">
+    写真がまだありません。
+  </p>
+) : (
+  <div class="masonry-grid" id="photo-grid">
+    {photos.map(photo => <PhotoCard photo={photo} />)}
+  </div>
+)}
+
+<style>
+  .masonry-grid {
+    columns: 1;
+    column-gap: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .masonry-grid {
+      columns: 2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .masonry-grid {
+      columns: 3;
+    }
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+</style>

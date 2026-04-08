@@ -1,0 +1,115 @@
+---
+// PhotoModal.astro
+// dialog 要素を使ったモーダル。
+// PhotoCard の data-photo 属性をクリックで取得し、表示する。
+---
+
+<dialog
+  id="photo-modal"
+  class="max-w-[95vw] max-h-[95vh] w-full bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-0 overflow-hidden"
+>
+  <div class="flex flex-col md:flex-row h-full max-h-[95vh]">
+    <!-- 画像エリア -->
+    <div class="flex-1 flex items-center justify-center bg-black min-h-0">
+      <img
+        id="modal-img"
+        src=""
+        alt=""
+        class="max-w-full max-h-[60vh] md:max-h-[95vh] object-contain"
+      />
+    </div>
+
+    <!-- EXIF パネル -->
+    <div class="md:w-64 shrink-0 flex flex-col bg-white dark:bg-gray-900">
+      <div class="flex justify-end p-3">
+        <button
+          id="modal-close"
+          class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label="閉じる"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div id="modal-exif" class="px-4 pb-4 overflow-y-auto text-sm space-y-3 text-gray-700 dark:text-gray-300">
+        <!-- JS で動的に挿入 -->
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  dialog {
+    border: none;
+    padding: 0;
+  }
+
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+  }
+</style>
+
+<script>
+  import type { Photo } from '../types';
+
+  const modal = document.getElementById('photo-modal') as HTMLDialogElement;
+  const img = document.getElementById('modal-img') as HTMLImageElement;
+  const exifPanel = document.getElementById('modal-exif') as HTMLDivElement;
+  const closeBtn = document.getElementById('modal-close') as HTMLButtonElement;
+
+  // 閉じる
+  closeBtn.addEventListener('click', () => modal.close());
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.close();
+  });
+
+  // 写真カードのクリックを受け取る（イベント委譲）
+  document.addEventListener('click', e => {
+    const card = (e.target as Element).closest<HTMLButtonElement>('[data-photo]');
+    if (!card) return;
+
+    const photo: Photo = JSON.parse(card.dataset.photo!);
+    openModal(photo);
+  });
+
+  function openModal(photo: Photo) {
+    img.src = photo.display;
+    img.alt = photo.filename;
+    exifPanel.innerHTML = buildExifHtml(photo.exif);
+    modal.showModal();
+  }
+
+  function buildExifHtml(exif: Photo['exif']): string {
+    const rows: { label: string; value: string }[] = [];
+
+    if (exif.dateTaken) {
+      const d = new Date(exif.dateTaken);
+      rows.push({
+        label: '撮影日時',
+        value: d.toLocaleString('ja-JP', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+        }),
+      });
+    }
+
+    if (exif.camera)       rows.push({ label: 'カメラ', value: exif.camera });
+    if (exif.lens)         rows.push({ label: 'レンズ', value: exif.lens });
+    if (exif.focalLength)  rows.push({ label: '焦点距離', value: `${exif.focalLength}mm` });
+    if (exif.aperture)     rows.push({ label: '絞り値', value: `f/${exif.aperture}` });
+    if (exif.shutterSpeed) rows.push({ label: 'SS', value: exif.shutterSpeed });
+    if (exif.iso)          rows.push({ label: 'ISO', value: String(exif.iso) });
+
+    if (rows.length === 0) {
+      return '<p class="text-gray-400 dark:text-gray-500">EXIF 情報なし</p>';
+    }
+
+    return rows.map(({ label, value }) => `
+      <div>
+        <dt class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">${label}</dt>
+        <dd class="font-medium">${value}</dd>
+      </div>
+    `).join('');
+  }
+</script>
