@@ -1,7 +1,33 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro"
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PhotoGrid from '../components/PhotoGrid.astro';
+import PhotoModal from '../components/PhotoModal.astro';
+import photosData from '../data/photos.json';
+import type { Photo } from '../types';
+
+const photos = photosData.photos as Photo[];
 ---
 
-<BaseLayout title="Home">
-	<h1>Home</h1>
+<BaseLayout title="SenaMint Photo Gallery">
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <PhotoGrid photos={photos} />
+    <PhotoModal />
+  </main>
 </BaseLayout>
+
+<script>
+  // URL の ?filter=landscape-autumn に応じてフィルター適用
+  const params = new URLSearchParams(location.search);
+  const initialFilter = params.get('filter') ?? 'all';
+
+  const items = document.querySelectorAll<HTMLElement>('.masonry-item');
+
+  function applyFilter(filterKey: string) {
+    items.forEach(item => {
+      const match = filterKey === 'all' || item.dataset.filter === filterKey;
+      item.style.display = match ? '' : 'none';
+    });
+  }
+
+  applyFilter(initialFilter);
+</script>

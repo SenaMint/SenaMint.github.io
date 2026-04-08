@@ -1,0 +1,27 @@
+---
+import type { Photo } from '../types';
+
+interface Props {
+  photo: Photo;
+}
+
+const { photo } = Astro.props;
+---
+
+<div class="masonry-item" data-filter={photo.filterKey}>
+  <button
+    class="group w-full cursor-pointer overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 dark:focus-visible:ring-gray-500"
+    data-photo={JSON.stringify(photo)}
+    aria-label={`写真を拡大表示: ${photo.filename}`}
+  >
+    <img
+      src={photo.thumbnail}
+      alt=""
+      width={photo.thumbnailWidth}
+      height={photo.thumbnailHeight}
+      loading="lazy"
+      decoding="async"
+      class="w-full h-auto block transition-transform duration-300 group-hover:scale-105"
+    />
+  </button>
+</div>

@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "label": "風景",
+      "children": [
+        { "label": "春", "filterKey": "landscape-spring" },
+        { "label": "夏", "filterKey": "landscape-summer" },
+        { "label": "秋", "filterKey": "landscape-autumn" },
+        { "label": "冬", "filterKey": "landscape-winter" }
+      ]
+    },
+    {
+      "label": "水族館",
+      "children": [
+        { "label": "hoge", "filterKey": "aquarium-hoge" },
+        { "label": "fuga", "filterKey": "aquarium-fuga" }
+      ]
+    }
+  ]
+}
