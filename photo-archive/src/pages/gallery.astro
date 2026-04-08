@@ -12,123 +12,258 @@ const photos: Photo[] = existsSync(photosJsonPath)
   ? (JSON.parse(readFileSync(photosJsonPath, 'utf-8')).photos as Photo[]) ?? []
   : [];
 
-// nav.json から filterKey → 表示ラベルのマップを作成
-const filterLabels: Record<string, string> = {};
-navData.items.forEach(item => {
-  item.children.forEach(child => {
-    filterLabels[child.filterKey] = `${item.label} / ${child.label}`;
-  });
-});
+// カスケード絞り込み用のカテゴリデータ（クライアントに渡す）
+type SubItem = { label: string; filterKey: string };
+type CatData = { slug: string; label: string; subcategories: SubItem[] };
 
-// 写真に含まれる filterKey のみ表示
-const activeFilterKeys = [...new Set(photos.map(p => p.filterKey))].sort();
+const categoryData: CatData[] = (navData.items as any[])
+  .filter(item => item.categorySlug && item.children)
+  .map(item => ({
+    slug: item.categorySlug as string,
+    label: item.label as string,
+    subcategories: item.children as SubItem[],
+  }));
+
+// 実際に写真が存在するカテゴリのみ表示
+const existingCategories = [...new Set(photos.map(p => p.category))];
+const filteredCategoryData = categoryData.filter(c => existingCategories.includes(c.slug));
 ---
 
-<BaseLayout title="Gallery - SenaMint">
+<BaseLayout title="Gallery - せなーんの写真ライブラリ">
   <div class="max-w-7xl mx-auto px-4 py-8">
 
-    <!-- フィルターボタン -->
-    {activeFilterKeys.length > 0 && (
-      <div class="flex gap-2 flex-wrap mb-8" id="filter-bar">
-        <button class="filter-btn" data-filter="all" aria-pressed="true">
-          すべて
-        </button>
-        {activeFilterKeys.map(key => (
-          <button class="filter-btn" data-filter={key} aria-pressed="false">
-            {filterLabels[key] ?? key}
-          </button>
+    <!-- フィルター・ソートバー -->
+    <div class="flex flex-wrap items-center gap-3 mb-8">
+      <!-- 大項目 -->
+      <select id="category-select" class="select-field">
+        <option value="all">すべてのカテゴリ</option>
+        {filteredCategoryData.map(cat => (
+          <option value={cat.slug}>{cat.label}</option>
         ))}
-      </div>
-    )}
+      </select>
+
+      <!-- 小項目（大項目選択後に有効化） -->
+      <select id="subcategory-select" class="select-field" disabled>
+        <option value="all">すべて</option>
+      </select>
+
+      <!-- 並び順 -->
+      <select id="sort-select" class="select-field ml-auto">
+        <option value="newest">新しい順</option>
+        <option value="oldest">古い順</option>
+        <option value="default">デフォルト</option>
+      </select>
+
+    </div>
 
     <PhotoGrid photos={photos} />
     <PhotoModal />
   </div>
+
+  <!-- トップへ戻るボタン -->
+  <button
+    id="back-to-top"
+    class="fixed bottom-6 right-6 z-30 w-11 h-11 flex items-center justify-center rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg opacity-0 translate-y-2 transition-all duration-200 hover:scale-110 pointer-events-none"
+    aria-label="ページトップへ戻る"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+    </svg>
+  </button>
 </BaseLayout>
 
 <style>
-  .filter-btn {
-    padding: 0.375rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    border: 1px solid rgb(209 213 219);
-    color: rgb(75 85 99);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .filter-btn:hover {
-    border-color: rgb(156 163 175);
+  .select-field {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(229 231 235);
+    background-color: white;
     color: rgb(17 24 39);
+    font-size: 0.875rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.2em;
+    cursor: pointer;
+    transition: border-color 0.15s;
   }
 
-  .filter-btn[aria-pressed="true"] {
-    background: rgb(17 24 39);
-    border-color: rgb(17 24 39);
-    color: white;
+  .select-field:hover {
+    border-color: rgb(156 163 175);
+  }
+
+  .select-field:focus {
+    outline: none;
+    border-color: rgb(107 114 128);
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+  }
+
+  .select-field:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   @media (prefers-color-scheme: dark) {
-    .filter-btn {
-      border-color: rgb(75 85 99);
-      color: rgb(156 163 175);
-    }
-
-    .filter-btn:hover {
-      border-color: rgb(156 163 175);
+    .select-field {
+      border-color: rgb(55 65 81);
+      background-color: rgb(31 41 55);
       color: rgb(243 244 246);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239CA3AF' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
     }
 
-    .filter-btn[aria-pressed="true"] {
-      background: rgb(243 244 246);
-      border-color: rgb(243 244 246);
-      color: rgb(17 24 39);
+    .select-field:hover {
+      border-color: rgb(75 85 99);
     }
   }
+
 </style>
 
-<script>
-  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-  const items = document.querySelectorAll<HTMLElement>('.masonry-item');
-  const noResults = document.getElementById('no-results');
-  const grid = document.getElementById('photo-grid');
+<script define:vars={{ categoryData: filteredCategoryData }}>
+  // ---- 型付き変数 ----
+  const catData = categoryData;
 
-  function applyFilter(filterKey: string) {
+  // ---- DOM 参照 ----
+  const catSelect     = document.getElementById('category-select');
+  const subSelect     = document.getElementById('subcategory-select');
+  const sortSelect    = document.getElementById('sort-select');
+  const grid          = document.getElementById('photo-grid');
+  const noResults     = document.getElementById('no-results');
+  const backToTopBtn  = document.getElementById('back-to-top');
+
+  // ---- 状態 ----
+  let currentCat  = 'all';
+  let currentSub  = 'all'; // 'all' or filterKey string
+  let currentSort = 'newest';
+
+  // ---- 全アイテムと元の順番を記憶 ----
+  const allItems = grid ? [...grid.querySelectorAll('.masonry-item')] : [];
+  allItems.forEach((item, i) => { item.dataset.originalIndex = String(i); });
+
+  // ---- フィルター判定 ----
+  function shouldShow(item) {
+    if (currentCat === 'all') return true;
+    if (item.dataset.category !== currentCat) return false;
+    if (currentSub !== 'all' && item.dataset.filter !== currentSub) return false;
+    return true;
+  }
+
+  // ---- ソート比較 ----
+  function compareItems(a, b) {
+    if (currentSort === 'default') {
+      return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+    }
+    const da = a.dataset.date || '';
+    const db = b.dataset.date || '';
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return currentSort === 'newest'
+      ? db.localeCompare(da)
+      : da.localeCompare(db);
+  }
+
+  // ---- メイン更新関数 ----
+  function update() {
+    if (!grid) return;
+
+    // ソート順でアイテムを並び替え
+    const sorted = [...allItems].sort(compareItems);
+    sorted.forEach(item => grid.appendChild(item));
+
+    // フィルター適用（表示/非表示）
     let visible = 0;
-
-    items.forEach(item => {
-      const match = filterKey === 'all' || item.dataset.filter === filterKey;
-      item.style.display = match ? '' : 'none';
-      if (match) visible++;
+    sorted.forEach(item => {
+      const show = shouldShow(item);
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
     });
 
-    // 空状態の表示切り替え
-    if (noResults) {
-      noResults.classList.toggle('visible', visible === 0);
+    // 空状態切り替え
+    if (noResults) noResults.classList.toggle('visible', visible === 0);
+    if (grid) grid.style.display = visible === 0 ? 'none' : '';
+
+    // レイアウトを更新（masonry モード時は Masonry.js を再初期化）
+    requestAnimationFrame(() => window.refreshLayout?.());
+  }
+
+  // ---- 小項目 select を再構築 ----
+  function rebuildSubSelect(catSlug) {
+    // 既存オプションをリセット
+    subSelect.innerHTML = '<option value="all">すべて</option>';
+
+    if (catSlug === 'all') {
+      subSelect.disabled = true;
+      return;
     }
-    if (grid) {
-      grid.style.display = visible === 0 ? 'none' : '';
+
+    const cat = catData.find(c => c.slug === catSlug);
+    if (!cat) { subSelect.disabled = true; return; }
+
+    cat.subcategories.forEach(sub => {
+      const opt = document.createElement('option');
+      opt.value = sub.filterKey;
+      opt.textContent = sub.label;
+      subSelect.appendChild(opt);
+    });
+
+    subSelect.disabled = false;
+  }
+
+  // ---- イベント：大項目 ----
+  catSelect?.addEventListener('change', () => {
+    currentCat = catSelect.value;
+    currentSub = 'all';
+    rebuildSubSelect(currentCat);
+    update();
+  });
+
+  // ---- イベント：小項目 ----
+  subSelect?.addEventListener('change', () => {
+    currentSub = subSelect.value; // 'all' or filterKey
+    update();
+  });
+
+  // ---- イベント：並び順 ----
+  sortSelect?.addEventListener('change', () => {
+    currentSort = sortSelect.value;
+    update();
+  });
+
+  // ---- URL パラメータで初期フィルター ----
+  const params = new URLSearchParams(location.search);
+  const filterParam = params.get('filter');
+
+  if (filterParam && filterParam !== 'all') {
+    // filterKey からカテゴリを特定
+    const matchCat = catData.find(c =>
+      c.subcategories.some(s => s.filterKey === filterParam)
+    );
+
+    if (matchCat) {
+      currentCat = matchCat.slug;
+      currentSub = filterParam;
+      catSelect.value = matchCat.slug;
+      rebuildSubSelect(matchCat.slug);
+      subSelect.value = filterParam;
     }
   }
 
-  // URL パラメータで初期フィルター
-  const params = new URLSearchParams(location.search);
-  const initialFilter = params.get('filter') ?? 'all';
+  update();
 
-  // 該当ボタンをアクティブに
-  filterBtns.forEach(btn => {
-    btn.setAttribute('aria-pressed', btn.dataset.filter === initialFilter ? 'true' : 'false');
-  });
+  // ---- トップへ戻るボタン ----
+  window.addEventListener('scroll', () => {
+    if (!backToTopBtn) return;
+    if (window.scrollY > 300) {
+      backToTopBtn.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+      backToTopBtn.classList.add('opacity-100', 'translate-y-0');
+    } else {
+      backToTopBtn.classList.remove('opacity-100', 'translate-y-0');
+      backToTopBtn.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+    }
+  }, { passive: true });
 
-  applyFilter(initialFilter);
-
-  // ボタンクリック
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
-      btn.setAttribute('aria-pressed', 'true');
-      applyFilter(btn.dataset.filter!);
-    });
+  backToTopBtn?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 </script>

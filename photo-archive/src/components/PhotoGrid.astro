@@ -16,10 +16,12 @@ const { photos } = Astro.props;
 ) : (
   <div>
     <div class="masonry-grid" id="photo-grid">
+      <!-- Masonry.js が列幅の基準に使うサイザー要素 -->
+      <div class="grid-sizer" aria-hidden="true"></div>
       {photos.map(photo => <PhotoCard photo={photo} />)}
     </div>
 
-    <!-- フィルターで0件になったときの空表示 -->
+    <!-- フィルターで 0 件になったときの空表示 -->
     <div id="no-results" class="hidden flex-col items-center justify-center py-24 text-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -28,58 +30,128 @@ const { photos } = Astro.props;
         class="w-28 h-28 mb-6 text-gray-300 dark:text-gray-600"
         aria-hidden="true"
       >
-        <!-- カメラ本体 -->
         <rect x="18" y="48" width="124" height="84" rx="10" fill="currentColor" opacity="0.35"/>
-        <!-- ビューファインダー -->
         <rect x="48" y="34" width="36" height="18" rx="5" fill="currentColor" opacity="0.35"/>
-        <!-- フラッシュ -->
         <rect x="108" y="36" width="22" height="13" rx="3" fill="currentColor" opacity="0.25"/>
-        <!-- レンズ外枠 -->
         <circle cx="80" cy="90" r="32" fill="currentColor" opacity="0.25"/>
-        <!-- レンズ内 -->
         <circle cx="80" cy="90" r="21" fill="currentColor" opacity="0.35"/>
-        <!-- レンズ中心 -->
         <circle cx="80" cy="90" r="12" fill="currentColor" opacity="0.45"/>
-        <!-- 目（左） -->
         <circle cx="74" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
-        <!-- 目（右） -->
         <circle cx="86" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
-        <!-- 口（への字） -->
         <path d="M73 97 Q80 92 87 97" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
-        <!-- 涙 -->
         <ellipse cx="71" cy="92" rx="2.5" ry="4" fill="#93C5FD" opacity="0.8"/>
       </svg>
-
       <p class="text-lg font-medium text-gray-500 dark:text-gray-400">写真がまだありません</p>
       <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">申し訳ありません 🙇</p>
     </div>
   </div>
 )}
 
-<style>
+<style is:global>
+  /*
+   * Masonry.js レイアウト
+   * アイテムの横幅を % で指定し、Masonry.js が position:absolute で縦位置を計算する。
+   * gutter は 0 にして padding でギャップを表現することで、% 幅が正確に 3 等分になる。
+   */
+
   .masonry-grid {
-    columns: 1;
-    column-gap: 1rem;
+    position: relative;
   }
 
+  /* 1列（モバイル） */
+  .masonry-grid .grid-sizer,
+  .masonry-grid .masonry-item {
+    width: 100%;
+  }
+
+  /* 2列（タブレット） */
   @media (min-width: 640px) {
-    .masonry-grid { columns: 2; }
+    .masonry-grid .grid-sizer,
+    .masonry-grid .masonry-item {
+      width: 50%;
+    }
   }
 
+  /* 3列（デスクトップ） */
   @media (min-width: 1024px) {
-    .masonry-grid { columns: 3; }
+    .masonry-grid .grid-sizer,
+    .masonry-grid .masonry-item {
+      width: 33.333%;
+    }
   }
 
-  .masonry-item {
-    break-inside: avoid;
-    margin-bottom: 1rem;
+  /* padding でギャップを作る（右・下） */
+  .masonry-grid .masonry-item {
+    box-sizing: border-box;
+    padding: 0 6px 12px;
   }
 
-  #no-results {
-    display: none;
+  /* 写真カードの角丸・オーバーフロー制御 */
+  .masonry-grid .masonry-item button {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    display: block;
+    width: 100%;
   }
 
-  #no-results.visible {
-    display: flex;
+  .masonry-grid .masonry-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    transition: transform 0.3s ease;
   }
+
+  .masonry-grid .masonry-item button:hover img {
+    transform: scale(1.03);
+  }
+
+  /* 空状態 */
+  #no-results { display: none; }
+  #no-results.visible { display: flex; }
 </style>
+
+<script>
+  // @ts-ignore
+  import Masonry from 'masonry-layout';
+  // @ts-ignore
+  import imagesLoaded from 'imagesloaded';
+
+  const grid = document.getElementById('photo-grid');
+  let msnry: any = null;
+
+  function initMasonry() {
+    if (!grid) return;
+    if (msnry) { msnry.destroy(); msnry = null; }
+
+    // lazy load の画像は初期高さが 0 になるため eager に変更
+    grid.querySelectorAll('img[loading="lazy"]').forEach(img => {
+      (img as HTMLImageElement).loading = 'eager';
+    });
+
+    msnry = new Masonry(grid, {
+      itemSelector: '.masonry-item',
+      columnWidth: '.grid-sizer',
+      percentPosition: true,
+      gutter: 0,
+    });
+
+    // 画像が 1 枚ロードされるたびに位置を再計算
+    imagesLoaded(grid).on('progress', () => msnry?.layout());
+  }
+
+  // フィルター・ソート後に gallery.astro から呼び出す
+  (window as any).refreshLayout = () => {
+    if (msnry) { msnry.destroy(); msnry = null; }
+    initMasonry();
+  };
+
+  initMasonry();
+
+  // リサイズ時も再計算（デバウンス付き）
+  let resizeTimer: ReturnType<typeof setTimeout>;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => msnry?.layout(), 150);
+  }, { passive: true });
+</script>
