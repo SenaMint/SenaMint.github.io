@@ -1,12 +1,16 @@
 ---
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PhotoGrid from '../components/PhotoGrid.astro';
 import PhotoModal from '../components/PhotoModal.astro';
-import photosData from '../data/photos.json';
 import navData from '../data/nav.json';
 import type { Photo } from '../types';
 
-const photos = photosData.photos as Photo[];
+const photosJsonPath = resolve('src/data/photos.json');
+const photos: Photo[] = existsSync(photosJsonPath)
+  ? (JSON.parse(readFileSync(photosJsonPath, 'utf-8')).photos as Photo[]) ?? []
+  : [];
 
 // nav.json から filterKey → 表示ラベルのマップを作成
 const filterLabels: Record<string, string> = {};
