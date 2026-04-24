@@ -1,7 +1,12 @@
 {
   "items": [
     {
+      "label": "写真ライブラリ",
+      "href": "/gallery/"
+    },
+    {
       "label": "風景",
+      "categorySlug": "landscape",
       "children": [
         { "label": "春", "filterKey": "landscape-spring" },
         { "label": "夏", "filterKey": "landscape-summer" },
@@ -11,6 +16,7 @@
     },
     {
       "label": "電車",
+      "categorySlug": "train",
       "children": [
         { "label": "新幹線", "filterKey": "train-shinkansen" },
         { "label": "在来線", "filterKey": "train-train" }
@@ -18,8 +24,9 @@
     },
     {
       "label": "飛行機",
+      "categorySlug": "airplane",
       "children": [
-        { "label": "羽田空港", "filterKey": "airplane-haneda"}
+        { "label": "羽田空港", "filterKey": "airplane-haneda" }
       ]
     }
   ]

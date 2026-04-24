@@ -2,9 +2,29 @@
   "name": "せなーんの写真ライブラリ",
   "bio": "カメラ初心者の雑多な記録。",
   "sns": [
-    { "label": "GitHub", "url": "https://github.com/SenaMint", "icon": "github" },
-    { "label": "X", "url": "https://x.com/SeN4229", "icon": "x" },
-    { "label": "X2", "url": "https://x.com/NaanPhoto", "icon": "x" },
-    { "label": "Instagram", "url": "https://www.instagram.com/sen0rs4x/", "icon": "instagram" }
+    {
+      "label": "GitHub",
+      "url": "https://github.com/SenaMint",
+      "icon": "github",
+      "description": "サイトのソースコードを公開しています"
+    },
+    {
+      "label": "X (SeN4229)",
+      "url": "https://x.com/SeN4229",
+      "icon": "x",
+      "description": "日常のつぶやきや雑記を投稿しています"
+    },
+    {
+      "label": "X (NaanPhoto)",
+      "url": "https://x.com/NaanPhoto",
+      "icon": "x",
+      "description": "撮影した写真をメインに投稿しています"
+    },
+    {
+      "label": "Instagram",
+      "url": "https://www.instagram.com/sen0rs4x/",
+      "icon": "instagram",
+      "description": "お気に入りの一枚をまとめています"
+    }
   ]
 }

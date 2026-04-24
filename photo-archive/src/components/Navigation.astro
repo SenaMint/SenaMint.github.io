@@ -1,45 +1,61 @@
 ---
 import navData from '../data/nav.json';
 
-const { items } = navData;
+type NavChild = { label: string; filterKey: string };
+type NavItem =
+  | { label: string; href: string; categorySlug?: never; children?: never }
+  | { label: string; href?: never; categorySlug: string; children: NavChild[] };
+
+const items = navData.items as NavItem[];
 ---
 
 <nav aria-label="Global navigation">
-  <ul class="flex items-center justify-center gap-16">
-    {items.map((item) => (
+  <ul class="flex items-center justify-center gap-10">
+    {items.map(item => (
       <li class="relative">
-        <details class="group relative">
-          <summary class="flex cursor-pointer list-none items-center gap-2 py-3 text-[15px] font-medium tracking-[0.08em] text-gray-900 dark:text-white transition hover:text-black dark:hover:text-gray-200">
-            <span>{item.label}</span>
-            <svg
-              class="h-4 w-4 text-zinc-500 transition group-open:rotate-180"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </summary>
+        {item.href ? (
+          /* 直リンク（ドロップダウンなし） */
+          <a
+            href={item.href}
+            class="py-3 text-[15px] font-medium tracking-[0.08em] text-gray-900 dark:text-white transition hover:text-black dark:hover:text-gray-200"
+          >
+            {item.label}
+          </a>
+        ) : (
+          /* ドロップダウン */
+          <details class="group relative">
+            <summary class="flex cursor-pointer list-none items-center gap-2 py-3 text-[15px] font-medium tracking-[0.08em] text-gray-900 dark:text-white transition hover:text-black dark:hover:text-gray-200">
+              <span>{item.label}</span>
+              <svg
+                class="h-4 w-4 text-zinc-500 transition group-open:rotate-180"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </summary>
 
-          <div class="absolute left-1/2 top-full z-50 w-40 -translate-x-1/2 mt-1">
-            <ul class="rounded-lg bg-white/80 dark:bg-gray-800/80 p-2 shadow-md shadow-black/5 backdrop-blur">
-              {item.children.map((child) => (
-                <li>
-                  <a
-                    href={`/gallery/?filter=${child.filterKey}`}
-                    class="block rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white transition hover:bg-gray-100/80 dark:hover:bg-gray-700/80 hover:text-black dark:hover:text-gray-200"
-                  >
-                    {child.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </details>
+            <div class="absolute left-1/2 top-full z-50 w-40 -translate-x-1/2 mt-1">
+              <ul class="rounded-lg bg-white/80 dark:bg-gray-800/80 p-2 shadow-md shadow-black/5 backdrop-blur">
+                {item.children?.map(child => (
+                  <li>
+                    <a
+                      href={`/gallery/?filter=${child.filterKey}`}
+                      class="block rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white transition hover:bg-gray-100/80 dark:hover:bg-gray-700/80"
+                    >
+                      {child.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        )}
       </li>
     ))}
   </ul>
@@ -47,7 +63,6 @@ const { items } = navData;
 
 <script>
   const menus = document.querySelectorAll('nav details');
-
   menus.forEach(menu => {
     menu.addEventListener('toggle', () => {
       if ((menu as HTMLDetailsElement).open) {
