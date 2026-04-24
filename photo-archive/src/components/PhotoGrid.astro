@@ -124,11 +124,6 @@ const { photos } = Astro.props;
     if (!grid) return;
     if (msnry) { msnry.destroy(); msnry = null; }
 
-    // lazy load の画像は初期高さが 0 になるため eager に変更
-    grid.querySelectorAll('img[loading="lazy"]').forEach(img => {
-      (img as HTMLImageElement).loading = 'eager';
-    });
-
     msnry = new Masonry(grid, {
       itemSelector: '.masonry-item',
       columnWidth: '.grid-sizer',
