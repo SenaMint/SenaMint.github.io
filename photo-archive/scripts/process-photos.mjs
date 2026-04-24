@@ -12,7 +12,7 @@
 
 import sharp from 'sharp';
 import exifr from 'exifr';
-import { readdir, mkdir, writeFile } from 'fs/promises';
+import { readdir, mkdir, writeFile, rm } from 'fs/promises';
 import { join, basename, extname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -119,6 +119,10 @@ async function processPhoto(sourcePath, categorySlug, subcategorySlug) {
 async function main() {
   console.log('📸 写真処理を開始します...\n');
 
+  // 前回生成物を削除して、削除漏れ・古いファイル残存を防ぐ
+  await rm(PUBLIC_PHOTOS_DIR, { recursive: true, force: true });
+  await rm(PUBLIC_FEATURED_DIR, { recursive: true, force: true });
+
   await mkdir(PUBLIC_PHOTOS_DIR, { recursive: true });
   await mkdir(DATA_DIR, { recursive: true });
 
@@ -131,6 +135,7 @@ async function main() {
   }
 
   const allPhotos = [];
+  const seenPhotoIds = new Set();
   let totalErrors = 0;
 
   for (const category of categories) {
@@ -149,6 +154,10 @@ async function main() {
         process.stdout.write(`  → ${basename(file)} ... `);
         try {
           const photo = await processPhoto(file, categorySlug, subcategorySlug);
+          if (seenPhotoIds.has(photo.id)) {
+            throw new Error(`slug が重複しています: ${photo.id}`);
+          }
+          seenPhotoIds.add(photo.id);
           allPhotos.push(photo);
           console.log(`✓`);
         } catch (err) {
@@ -166,6 +175,10 @@ async function main() {
         process.stdout.write(`  → ${basename(file)} ... `);
         try {
           const photo = await processPhoto(file, categorySlug, 'general');
+          if (seenPhotoIds.has(photo.id)) {
+            throw new Error(`slug が重複しています: ${photo.id}`);
+          }
+          seenPhotoIds.add(photo.id);
           allPhotos.push(photo);
           console.log(`✓`);
         } catch (err) {
@@ -195,7 +208,11 @@ async function processFeatured() {
     return; // フォルダが無ければスキップ
   }
 
-  if (featuredFiles.length === 0) return;
+  const featuredPath = join(DATA_DIR, 'featured.json');
+  if (featuredFiles.length === 0) {
+    await writeFile(featuredPath, JSON.stringify({ photos: [] }, null, 2), 'utf-8');
+    return;
+  }
 
   console.log(`\n🌟 featured (${featuredFiles.length}枚)`);
 
@@ -221,7 +238,6 @@ async function processFeatured() {
     }
   }
 
-  const featuredPath = join(DATA_DIR, 'featured.json');
   await writeFile(featuredPath, JSON.stringify({ photos: featuredPhotos }, null, 2), 'utf-8');
   console.log(`📄 src/data/featured.json を更新しました`);
 }

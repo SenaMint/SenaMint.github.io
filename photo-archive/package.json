@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "check": "astro check",
     "preview": "astro preview",
     "astro": "astro",
+    "lint": "astro check",
+    "test": "npm run check",
     "process-photos": "node scripts/process-photos.mjs"
   },
   "dependencies": {

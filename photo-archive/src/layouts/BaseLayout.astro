@@ -15,6 +15,10 @@ const {title = 'SenaMint'} = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
+		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests" />
+		<meta name="referrer" content="strict-origin-when-cross-origin" />
+		<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+		<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
 		<title>{title}</title>
 	</head>
 	<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
