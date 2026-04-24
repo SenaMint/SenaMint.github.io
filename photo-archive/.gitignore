@@ -24,6 +24,5 @@ pnpm-debug.log*
 source-photos/
 source-photos-featured/
 
-
 # jetbrains setting folder
 .idea/
