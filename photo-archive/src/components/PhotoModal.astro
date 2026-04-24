@@ -81,11 +81,12 @@
   function openModal(photo: Photo) {
     img.src = photo.display;
     img.alt = photo.filename;
-    exifPanel.innerHTML = buildExifHtml(photo.exif);
+    renderExif(exifPanel, photo.exif);
     modal.showModal();
   }
 
-  function buildExifHtml(exif: Photo['exif']): string {
+  function renderExif(container: HTMLDivElement, exif: Photo['exif']) {
+    container.replaceChildren();
     const rows: { label: string; value: string }[] = [];
 
     if (exif.dateTaken) {
@@ -107,14 +108,29 @@
     if (exif.iso)          rows.push({ label: 'ISO', value: String(exif.iso) });
 
     if (rows.length === 0) {
-      return '<p class="text-gray-400 dark:text-gray-500">EXIF 情報なし</p>';
+      const empty = document.createElement('p');
+      empty.className = 'text-gray-400 dark:text-gray-500';
+      empty.textContent = 'EXIF 情報なし';
+      container.appendChild(empty);
+      return;
     }
 
-    return rows.map(({ label, value }) => `
-      <div>
-        <dt class="text-xs text-gray-400 dark:text-gray-500 mb-0.5">${label}</dt>
-        <dd class="font-medium">${value}</dd>
-      </div>
-    `).join('');
+    const fragment = document.createDocumentFragment();
+    rows.forEach(({ label, value }) => {
+      const wrapper = document.createElement('div');
+
+      const dt = document.createElement('dt');
+      dt.className = 'text-xs text-gray-400 dark:text-gray-500 mb-0.5';
+      dt.textContent = label;
+
+      const dd = document.createElement('dd');
+      dd.className = 'font-medium';
+      dd.textContent = value;
+
+      wrapper.append(dt, dd);
+      fragment.appendChild(wrapper);
+    });
+
+    container.appendChild(fragment);
   }
 </script>

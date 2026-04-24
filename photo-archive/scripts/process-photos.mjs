@@ -12,7 +12,7 @@
 
 import sharp from 'sharp';
 import exifr from 'exifr';
-import { readdir, mkdir, writeFile } from 'fs/promises';
+import { readdir, mkdir, writeFile, rm } from 'fs/promises';
 import { join, basename, extname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -116,13 +116,22 @@ async function processPhoto(sourcePath, categorySlug, subcategorySlug) {
   };
 }
 
+function buildPhotoId(sourcePath, categorySlug, subcategorySlug) {
+  const ext = extname(sourcePath).toLowerCase();
+  const nameSlug = slugify(basename(sourcePath, ext));
+  return `${categorySlug}-${subcategorySlug}-${nameSlug}`;
+}
+
 async function main() {
   console.log('📸 写真処理を開始します...\n');
-
-  await mkdir(PUBLIC_PHOTOS_DIR, { recursive: true });
-  await mkdir(DATA_DIR, { recursive: true });
-
-  const categories = await getSubdirs(SOURCE_PHOTOS_DIR);
+  let categories = [];
+  try {
+    categories = await getSubdirs(SOURCE_PHOTOS_DIR);
+  } catch {
+    console.log('source-photos/ が見つかりません。');
+    console.log('例: source-photos/landscape/autumn/ に画像を配置してください。');
+    return;
+  }
 
   if (categories.length === 0) {
     console.log('source-photos/ にカテゴリフォルダが見つかりません。');
@@ -130,7 +139,14 @@ async function main() {
     return;
   }
 
+  // 入力が存在することを確認してから、前回生成物を削除する
+  await rm(PUBLIC_PHOTOS_DIR, { recursive: true, force: true });
+  await rm(PUBLIC_FEATURED_DIR, { recursive: true, force: true });
+  await mkdir(PUBLIC_PHOTOS_DIR, { recursive: true });
+  await mkdir(DATA_DIR, { recursive: true });
+
   const allPhotos = [];
+  const seenPhotoIds = new Set();
   let totalErrors = 0;
 
   for (const category of categories) {
@@ -148,6 +164,11 @@ async function main() {
       for (const file of files) {
         process.stdout.write(`  → ${basename(file)} ... `);
         try {
+          const photoId = buildPhotoId(file, categorySlug, subcategorySlug);
+          if (seenPhotoIds.has(photoId)) {
+            throw new Error(`slug が重複しています: ${photoId}`);
+          }
+          seenPhotoIds.add(photoId);
           const photo = await processPhoto(file, categorySlug, subcategorySlug);
           allPhotos.push(photo);
           console.log(`✓`);
@@ -165,6 +186,11 @@ async function main() {
       for (const file of rootFiles) {
         process.stdout.write(`  → ${basename(file)} ... `);
         try {
+          const photoId = buildPhotoId(file, categorySlug, 'general');
+          if (seenPhotoIds.has(photoId)) {
+            throw new Error(`slug が重複しています: ${photoId}`);
+          }
+          seenPhotoIds.add(photoId);
           const photo = await processPhoto(file, categorySlug, 'general');
           allPhotos.push(photo);
           console.log(`✓`);
@@ -195,7 +221,11 @@ async function processFeatured() {
     return; // フォルダが無ければスキップ
   }
 
-  if (featuredFiles.length === 0) return;
+  const featuredPath = join(DATA_DIR, 'featured.json');
+  if (featuredFiles.length === 0) {
+    await writeFile(featuredPath, JSON.stringify({ photos: [] }, null, 2), 'utf-8');
+    return;
+  }
 
   console.log(`\n🌟 featured (${featuredFiles.length}枚)`);
 
@@ -221,7 +251,6 @@ async function processFeatured() {
     }
   }
 
-  const featuredPath = join(DATA_DIR, 'featured.json');
   await writeFile(featuredPath, JSON.stringify({ photos: featuredPhotos }, null, 2), 'utf-8');
   console.log(`📄 src/data/featured.json を更新しました`);
 }
