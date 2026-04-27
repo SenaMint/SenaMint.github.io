@@ -25,7 +25,7 @@ const PUBLIC_FEATURED_DIR = join(ROOT, 'public', 'featured');
 const DATA_DIR = join(ROOT, 'src', 'data');
 
 const THUMBNAIL_WIDTH = 600;
-const DISPLAY_WIDTH = 3840;
+const DISPLAY_LONG_EDGE = 3840;
 const SUPPORTED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.heic', '.heif', '.avif']);
 // 出力サブフォルダ（スキャン対象から除外）
 const OUTPUT_DIRS = new Set(['thumbnails', 'display']);
@@ -74,7 +74,7 @@ async function processPhoto(sourcePath, categorySlug, subcategorySlug) {
     .toFile(thumbDest);
 
   const displayInfo = await sharp(sourcePath)
-    .resize(DISPLAY_WIDTH, null, { withoutEnlargement: true })
+    .resize(DISPLAY_LONG_EDGE, DISPLAY_LONG_EDGE, { fit: 'inside', withoutEnlargement: true })
     .webp({ quality: 85 })
     .toFile(displayDest);
 

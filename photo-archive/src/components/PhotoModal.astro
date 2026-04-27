@@ -79,7 +79,13 @@
   });
 
   function openModal(photo: Photo) {
-    img.src = photo.display;
+    // iOS WebKit の GPU テクスチャ上限は約 4096px。
+    // 縦長の display 画像（例: 3840×5760）は高さが上限を超えるため表示されない。
+    // 上限を超える場合は thumbnail を使用する（display 画像を 1920px 以下で再生成すれば解消）。
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Mac') && 'ontouchstart' in window);
+    const maxDim = Math.max(photo.displayWidth, photo.displayHeight);
+    img.src = isIOS && maxDim > 4096 ? photo.thumbnail : photo.display;
     img.alt = photo.filename;
     renderExif(exifPanel, photo.exif);
     modal.showModal();

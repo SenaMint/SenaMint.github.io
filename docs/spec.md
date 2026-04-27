@@ -67,7 +67,7 @@ npm run process-photos
 | 種別 | 出力先 | 解像度 | フォーマット | 品質 |
 |------|--------|--------|-------------|------|
 | サムネイル | `public/photos/{category}/thumbnails/` | 幅 600px | WebP | 80 |
-| 表示用 | `public/photos/{category}/display/` | 幅 3840px | WebP | 85 |
+| 表示用 | `public/photos/{category}/display/` | 長辺 3840px | WebP | 85 |
 | メタデータ | `src/data/photos.json` | - | JSON | - |
 
 - 元画像より小さい場合は拡大しない（`withoutEnlargement: true`）
@@ -120,7 +120,9 @@ npm run process-photos
 ### モーダル（PhotoModal.astro）
 
 - `<dialog>` 要素を使用
-- 表示用 WebP（最大 3840px）を表示
+- 表示用 WebP（最大 1920px）を表示
+  - iOS WebKit の GPU テクスチャ上限（約 4096px）対応のため、長辺を 3840px に統一（縦位置写真は幅が 3840 未満になり上限内に収まる）
+  - iOS 判定: display 画像の最大辺が 4096px を超える場合はサムネイルで代替表示
 - EXIF 情報パネルを併記
   - 撮影日時 / カメラ / レンズ / 焦点距離 / 絞り / SS / ISO
 - 背景クリックまたは × ボタンで閉じる
@@ -152,3 +154,4 @@ npm run process-photos
 | 日付 | 内容 |
 |------|------|
 | 2026-04-08 | 初版作成 |
+| 2026-04-28 | display 解像度を「長辺 3840px」に変更（縦位置写真の iOS WebKit GPU テクスチャ上限対応） |
