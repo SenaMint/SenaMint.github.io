@@ -28,6 +28,15 @@
       "children": [
         { "label": "羽田空港", "filterKey": "airplane-haneda" }
       ]
+    },
+    {
+      "label": "水族館",
+      "categorySlug": "aquarium",
+      "children": [
+        { "label": "鴨川シーワールド", "filterKey": "aquarium-kamogawa" },
+        { "label": "マクセルアクアパーク品川", "filterKey": "aquarium-maxell" },
+        { "label": "すみだ水族館", "filterKey": "aquarium-sumida" }
+      ]
     }
   ]
 }
