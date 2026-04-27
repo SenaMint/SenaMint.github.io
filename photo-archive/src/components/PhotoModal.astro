@@ -76,7 +76,7 @@
     -webkit-filter: none;
   }
 
-  body.modal-open-fallback {
+  :global(body.modal-open-fallback){
     overflow: hidden;
   }
 
@@ -155,7 +155,6 @@
     modal.removeAttribute('open');
     modal.removeAttribute('data-manual-open');
     document.body.classList.remove('modal-open-fallback');
-    usingFallbackModal = false;
   }
 
   function renderExif(container: HTMLDivElement, exif: Photo['exif']) {
