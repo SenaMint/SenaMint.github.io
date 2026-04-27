@@ -12,7 +12,6 @@ const photos: Photo[] = existsSync(photosJsonPath)
   ? (JSON.parse(readFileSync(photosJsonPath, 'utf-8')).photos as Photo[]) ?? []
   : [];
 
-// カスケード絞り込み用のカテゴリデータ（クライアントに渡す）
 type SubItem = { label: string; filterKey: string };
 type CatData = { slug: string; label: string; subcategories: SubItem[] };
 
@@ -24,39 +23,56 @@ const categoryData: CatData[] = (navData.items as any[])
     subcategories: item.children as SubItem[],
   }));
 
-// 実際に写真が存在するカテゴリのみ表示
 const existingCategories = [...new Set(photos.map(p => p.category))];
 const filteredCategoryData = categoryData.filter(c => existingCategories.includes(c.slug));
 ---
 
 <BaseLayout title="Gallery - せなーんの写真ライブラリ">
-  <div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="w-full max-w-[1600px] mx-auto px-6 py-8">
 
-    <!-- フィルター・ソートバー -->
+    <!-- フィルターバー -->
     <div class="flex flex-wrap items-center gap-3 mb-8">
-      <!-- 大項目 -->
-      <select id="category-select" class="select-field">
-        <option value="all">すべてのカテゴリ</option>
-        {filteredCategoryData.map(cat => (
-          <option value={cat.slug}>{cat.label}</option>
-        ))}
-      </select>
 
-      <!-- 小項目（大項目選択後に有効化） -->
-      <select id="subcategory-select" class="select-field" disabled>
-        <option value="all">すべて</option>
-      </select>
+      <!-- カテゴリドロップダウン -->
+      <details id="cat-dropdown" class="filter-dd group relative">
+        <summary class="dd-trigger">
+          <span id="cat-label">すべてのカテゴリ</span>
+          <svg class="dd-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+          </svg>
+        </summary>
+        <div class="dd-panel">
+          <ul class="dd-list">
+            <li>
+              <button class="dd-item active" data-cat="all">すべてのカテゴリ</button>
+            </li>
+            {filteredCategoryData.map(cat => (
+              <li>
+                <button class="dd-item" data-cat={cat.slug}>{cat.label}</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </details>
 
-      <!-- 並び順 -->
-      <select id="sort-select" class="select-field ml-auto">
-        <option value="newest">新しい順</option>
-        <option value="oldest">古い順</option>
-        <option value="default">デフォルト</option>
-      </select>
+      <!-- サブカテゴリドロップダウン（カテゴリ選択時のみ表示） -->
+      <details id="sub-dropdown" class="filter-dd group relative hidden">
+        <summary class="dd-trigger">
+          <span id="sub-label">すべて</span>
+          <svg class="dd-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+          </svg>
+        </summary>
+        <div class="dd-panel">
+          <ul id="sub-list" class="dd-list">
+            <!-- JS で動的に生成 -->
+          </ul>
+        </div>
+      </details>
 
     </div>
 
-    <PhotoGrid photos={photos} />
+    <PhotoGrid />
     <PhotoModal />
   </div>
 
@@ -72,183 +88,297 @@ const filteredCategoryData = categoryData.filter(c => existingCategories.include
   </button>
 </BaseLayout>
 
-<style>
-  .select-field {
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
+<style is:global>
+  .filter-dd summary { list-style: none; }
+  .filter-dd summary::-webkit-details-marker { display: none; }
+
+  .dd-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
     border-radius: 0.5rem;
     border: 1px solid rgb(229 231 235);
     background-color: white;
     color: rgb(17 24 39);
     font-size: 0.875rem;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1.2em;
+    font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, background-color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+    min-width: 9rem;
+    justify-content: space-between;
   }
 
-  .select-field:hover {
+  .dd-trigger:hover {
     border-color: rgb(156 163 175);
+    background-color: rgb(249 250 251);
   }
 
-  .select-field:focus {
-    outline: none;
+  .filter-dd[open] .dd-trigger {
     border-color: rgb(107 114 128);
-    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+    background-color: rgb(249 250 251);
   }
 
-  .select-field:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  .dd-chevron {
+    width: 1rem;
+    height: 1rem;
+    color: rgb(113 113 122);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .filter-dd[open] .dd-chevron {
+    transform: rotate(180deg);
+  }
+
+  .dd-panel {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.25rem);
+    z-index: 50;
+    min-width: 11rem;
+  }
+
+  .dd-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.375rem;
+    border-radius: 0.625rem;
+    background-color: rgb(255 255 255 / 0.92);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.08), 0 1px 3px rgb(0 0 0 / 0.06);
+    backdrop-filter: blur(8px);
+  }
+
+  .dd-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: rgb(17 24 39);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.1s;
+  }
+
+  .dd-item:hover {
+    background-color: rgb(243 244 246 / 0.8);
+  }
+
+  .dd-item.active {
+    background-color: rgb(17 24 39 / 0.07);
+    font-weight: 500;
   }
 
   @media (prefers-color-scheme: dark) {
-    .select-field {
+    .dd-trigger {
       border-color: rgb(55 65 81);
       background-color: rgb(31 41 55);
       color: rgb(243 244 246);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239CA3AF' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
     }
 
-    .select-field:hover {
+    .dd-trigger:hover,
+    .filter-dd[open] .dd-trigger {
       border-color: rgb(75 85 99);
+      background-color: rgb(55 65 81);
+    }
+
+    .dd-list {
+      background-color: rgb(31 41 55 / 0.92);
+      box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+    }
+
+    .dd-item {
+      color: rgb(243 244 246);
+    }
+
+    .dd-item:hover {
+      background-color: rgb(55 65 81 / 0.8);
+    }
+
+    .dd-item.active {
+      background-color: rgb(243 244 246 / 0.1);
     }
   }
-
 </style>
 
-<script define:vars={{ categoryData: filteredCategoryData }}>
-  // ---- 型付き変数 ----
+<script define:vars={{ categoryData: filteredCategoryData, allPhotos: photos }}>
+  const PAGE_SIZE = 24;
   const catData = categoryData;
 
-  // ---- DOM 参照 ----
-  const catSelect     = document.getElementById('category-select');
-  const subSelect     = document.getElementById('subcategory-select');
-  const sortSelect    = document.getElementById('sort-select');
-  const grid          = document.getElementById('photo-grid');
-  const noResults     = document.getElementById('no-results');
-  const backToTopBtn  = document.getElementById('back-to-top');
+  const catDropdown  = document.getElementById('cat-dropdown');
+  const subDropdown  = document.getElementById('sub-dropdown');
+  const catLabel     = document.getElementById('cat-label');
+  const subLabel     = document.getElementById('sub-label');
+  const subList      = document.getElementById('sub-list');
+  const grid         = document.getElementById('photo-grid');
+  const noResults    = document.getElementById('no-results');
+  const sentinel     = document.getElementById('scroll-sentinel');
+  const backToTopBtn = document.getElementById('back-to-top');
 
-  // ---- 状態 ----
-  let currentCat  = 'all';
-  let currentSub  = 'all'; // 'all' or filterKey string
-  let currentSort = 'newest';
+  let currentCat = 'all';
+  let currentSub = 'all';
+  let filteredPhotos = [];
+  let renderedCount = 0;
 
-  // ---- 全アイテムと元の順番を記憶 ----
-  const allItems = grid ? [...grid.querySelectorAll('.masonry-item')] : [];
-  allItems.forEach((item, i) => { item.dataset.originalIndex = String(i); });
+  // ---- 写真カード DOM 生成 ----
+  function createPhotoCard(photo) {
+    const item = document.createElement('div');
+    item.className = 'masonry-item';
+    item.dataset.filter   = photo.filterKey ?? '';
+    item.dataset.category = photo.category ?? '';
+    item.dataset.date     = photo.exif?.dateTaken ?? '';
 
-  // ---- フィルター判定 ----
-  function shouldShow(item) {
-    if (currentCat === 'all') return true;
-    if (item.dataset.category !== currentCat) return false;
-    if (currentSub !== 'all' && item.dataset.filter !== currentSub) return false;
-    return true;
+    const btn = document.createElement('button');
+    btn.className  = 'group w-full cursor-pointer overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 dark:focus-visible:ring-gray-500';
+    btn.dataset.photo = JSON.stringify(photo);
+    btn.setAttribute('aria-label', `写真を拡大表示: ${photo.filename}`);
+
+    const img = document.createElement('img');
+    img.src       = photo.thumbnail;
+    img.alt       = '';
+    img.width     = photo.thumbnailWidth;
+    img.height    = photo.thumbnailHeight;
+    img.loading   = 'lazy';
+    img.decoding  = 'async';
+    img.className = 'w-full h-auto block transition-transform duration-300 group-hover:scale-105';
+
+    btn.appendChild(img);
+    item.appendChild(btn);
+    return item;
   }
 
-  // ---- ソート比較 ----
-  function compareItems(a, b) {
-    if (currentSort === 'default') {
-      return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+  // ---- フィルター + ソート ----
+  function applyFilter() {
+    let result = allPhotos;
+    if (currentCat !== 'all') {
+      result = result.filter(p => p.category === currentCat);
+      if (currentSub !== 'all') result = result.filter(p => p.filterKey === currentSub);
     }
-    const da = a.dataset.date || '';
-    const db = b.dataset.date || '';
-    if (!da && !db) return 0;
-    if (!da) return 1;
-    if (!db) return -1;
-    return currentSort === 'newest'
-      ? db.localeCompare(da)
-      : da.localeCompare(db);
+    return result.slice().sort((a, b) => {
+      const da = a.exif?.dateTaken ?? '';
+      const db = b.exif?.dateTaken ?? '';
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.localeCompare(da);
+    });
   }
 
-  // ---- メイン更新関数 ----
+  // ---- 次バッチを DOM に追加 ----
+  function appendBatch() {
+    if (!grid || renderedCount >= filteredPhotos.length) return [];
+    const batch = filteredPhotos.slice(renderedCount, renderedCount + PAGE_SIZE);
+    const newItems = batch.map(createPhotoCard);
+    newItems.forEach(item => grid.appendChild(item));
+    renderedCount += batch.length;
+    return newItems;
+  }
+
+  // ---- フィルター変更時のリセット ----
   function update() {
     if (!grid) return;
 
-    // ソート順でアイテムを並び替え
-    const sorted = [...allItems].sort(compareItems);
-    sorted.forEach(item => grid.appendChild(item));
+    // 既存カードを削除
+    grid.querySelectorAll('.masonry-item').forEach(el => el.remove());
+    renderedCount = 0;
 
-    // フィルター適用（表示/非表示）
-    let visible = 0;
-    sorted.forEach(item => {
-      const show = shouldShow(item);
-      item.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
+    filteredPhotos = applyFilter();
+    const hasResults = filteredPhotos.length > 0;
 
-    // 空状態切り替え
-    if (noResults) noResults.classList.toggle('visible', visible === 0);
-    if (grid) grid.style.display = visible === 0 ? 'none' : '';
+    if (noResults) noResults.classList.toggle('visible', !hasResults);
+    grid.style.display = !hasResults ? 'none' : '';
 
-    // レイアウトを更新（masonry モード時は Masonry.js を再初期化）
-    requestAnimationFrame(() => window.refreshLayout?.());
+    if (hasResults) {
+      appendBatch();
+      requestAnimationFrame(() => window.refreshLayout?.());
+    }
   }
 
-  // ---- 小項目 select を再構築 ----
-  function rebuildSubSelect(catSlug) {
-    // 既存オプションをリセット
-    subSelect.innerHTML = '<option value="all">すべて</option>';
+  // ---- 無限スクロール（IntersectionObserver） ----
+  const observer = new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting) return;
+    if (renderedCount >= filteredPhotos.length) return;
+    const newItems = appendBatch();
+    if (newItems.length > 0) window.appendLayout?.(newItems);
+  }, { rootMargin: '300px' });
 
-    if (catSlug === 'all') {
-      subSelect.disabled = true;
-      return;
-    }
+  if (sentinel) observer.observe(sentinel);
+
+  // ---- サブカテゴリリスト再構築 ----
+  function rebuildSubList(catSlug) {
+    if (!subList || !subDropdown) return;
+    if (catSlug === 'all') { subDropdown.classList.add('hidden'); return; }
 
     const cat = catData.find(c => c.slug === catSlug);
-    if (!cat) { subSelect.disabled = true; return; }
+    if (!cat) { subDropdown.classList.add('hidden'); return; }
 
-    cat.subcategories.forEach(sub => {
-      const opt = document.createElement('option');
-      opt.value = sub.filterKey;
-      opt.textContent = sub.label;
-      subSelect.appendChild(opt);
+    subList.innerHTML = '';
+    const items = [{ filterKey: 'all', label: 'すべて' }, ...cat.subcategories];
+    items.forEach(sub => {
+      const btn = document.createElement('button');
+      btn.className = 'dd-item' + (sub.filterKey === 'all' ? ' active' : '');
+      btn.dataset.sub = sub.filterKey;
+      btn.textContent = sub.label;
+      btn.addEventListener('click', () => {
+        currentSub = sub.filterKey;
+        if (subLabel) subLabel.textContent = sub.label;
+        subList.querySelectorAll('.dd-item').forEach(b => b.classList.toggle('active', b.dataset.sub === currentSub));
+        subDropdown.removeAttribute('open');
+        update();
+      });
+      const li = document.createElement('li');
+      li.appendChild(btn);
+      subList.appendChild(li);
     });
 
-    subSelect.disabled = false;
+    subDropdown.classList.remove('hidden');
+    if (subLabel) subLabel.textContent = 'すべて';
   }
 
-  // ---- イベント：大項目 ----
-  catSelect?.addEventListener('change', () => {
-    currentCat = catSelect.value;
-    currentSub = 'all';
-    rebuildSubSelect(currentCat);
-    update();
+  // ---- カテゴリクリック ----
+  document.querySelectorAll('#cat-dropdown .dd-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentCat = btn.dataset.cat;
+      currentSub = 'all';
+      if (catLabel) catLabel.textContent = btn.textContent;
+      document.querySelectorAll('#cat-dropdown .dd-item').forEach(b => b.classList.toggle('active', b.dataset.cat === currentCat));
+      catDropdown?.removeAttribute('open');
+      rebuildSubList(currentCat);
+      update();
+    });
   });
 
-  // ---- イベント：小項目 ----
-  subSelect?.addEventListener('change', () => {
-    currentSub = subSelect.value; // 'all' or filterKey
-    update();
-  });
-
-  // ---- イベント：並び順 ----
-  sortSelect?.addEventListener('change', () => {
-    currentSort = sortSelect.value;
-    update();
+  // ---- 外側クリックでドロップダウンを閉じる ----
+  document.addEventListener('click', e => {
+    if (!catDropdown?.contains(e.target)) catDropdown?.removeAttribute('open');
+    if (!subDropdown?.contains(e.target)) subDropdown?.removeAttribute('open');
   });
 
   // ---- URL パラメータで初期フィルター ----
   const params = new URLSearchParams(location.search);
   const filterParam = params.get('filter');
-
   if (filterParam && filterParam !== 'all') {
-    // filterKey からカテゴリを特定
-    const matchCat = catData.find(c =>
-      c.subcategories.some(s => s.filterKey === filterParam)
-    );
-
+    const matchCat = catData.find(c => c.subcategories.some(s => s.filterKey === filterParam));
     if (matchCat) {
       currentCat = matchCat.slug;
       currentSub = filterParam;
-      catSelect.value = matchCat.slug;
-      rebuildSubSelect(matchCat.slug);
-      subSelect.value = filterParam;
+      if (catLabel) catLabel.textContent = matchCat.label;
+      document.querySelectorAll('#cat-dropdown .dd-item').forEach(b => b.classList.toggle('active', b.dataset.cat === matchCat.slug));
+      rebuildSubList(matchCat.slug);
+      const matchSub = matchCat.subcategories.find(s => s.filterKey === filterParam);
+      if (matchSub && subLabel) {
+        subLabel.textContent = matchSub.label;
+        subList?.querySelectorAll('.dd-item').forEach(b => b.classList.toggle('active', b.dataset.sub === filterParam));
+      }
     }
   }
 
+  // ---- 初期レンダリング ----
   update();
 
   // ---- トップへ戻るボタン ----
