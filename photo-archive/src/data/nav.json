@@ -28,6 +28,11 @@
       "children": [
         { "label": "羽田空港", "filterKey": "airplane-haneda" }
       ]
+    },
+    {
+      "label": "水族館",
+      "categorySlug": "aquarium",
+      "children": []
     }
   ]
 }
