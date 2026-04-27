@@ -47,6 +47,11 @@
     left: 50%;
     transform: translate(-50%, -50%);
     margin: 0;
+    display: none;
+  }
+
+  dialog[open] {
+    display: block;
   }
 
   dialog::backdrop {
@@ -71,6 +76,10 @@
     -webkit-filter: none;
   }
 
+  :global(body.modal-open-fallback){
+    overflow: hidden;
+  }
+
 </style>
 
 <script>
@@ -83,15 +92,16 @@
   const ua = navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua) ||
     (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
+  let usingFallbackModal = false;
 
   if (isIOS) {
     modal.classList.add('ios-modal-fix');
   }
 
   // 閉じる
-  closeBtn.addEventListener('click', () => modal.close());
+  closeBtn.addEventListener('click', () => closeModalElement());
   modal.addEventListener('click', e => {
-    if (e.target === modal) modal.close();
+    if (e.target === modal) closeModalElement();
   });
 
   // 写真カードのクリックを受け取る（イベント委譲）
@@ -111,7 +121,40 @@
     img.src = isIOS && maxDim > 4096 ? photo.thumbnail : photo.display;
     img.alt = photo.filename;
     renderExif(exifPanel, photo.exif);
-    modal.showModal();
+    openModalElement();
+  }
+
+  function openModalElement() {
+    usingFallbackModal = typeof modal.showModal !== 'function';
+
+    if (!usingFallbackModal) {
+      try {
+        if (!modal.open) {
+          modal.showModal();
+        }
+        return;
+      } catch {
+        usingFallbackModal = true;
+      }
+    }
+
+    modal.setAttribute('open', '');
+    modal.setAttribute('data-manual-open', 'true');
+    document.body.classList.add('modal-open-fallback');
+  }
+
+  function closeModalElement() {
+    if (!usingFallbackModal && typeof modal.close === 'function') {
+      try {
+        modal.close();
+      } catch {
+        // close に失敗した場合も fallback 側で確実に閉じる
+      }
+    }
+
+    modal.removeAttribute('open');
+    modal.removeAttribute('data-manual-open');
+    document.body.classList.remove('modal-open-fallback');
   }
 
   function renderExif(container: HTMLDivElement, exif: Photo['exif']) {
