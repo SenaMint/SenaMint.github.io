@@ -1,59 +1,42 @@
 ---
-import type { Photo } from '../types';
-import PhotoCard from './PhotoCard.astro';
-
-interface Props {
-  photos: Photo[];
-}
-
-const { photos } = Astro.props;
+// 写真カードは gallery.astro の JS で動的に挿入される
 ---
 
-{photos.length === 0 ? (
-  <p class="text-center text-gray-400 dark:text-gray-500 py-24">
-    写真がまだありません。
-  </p>
-) : (
-  <div>
-    <div class="masonry-grid" id="photo-grid">
-      <!-- Masonry.js が列幅の基準に使うサイザー要素 -->
-      <div class="grid-sizer" aria-hidden="true"></div>
-      {photos.map(photo => <PhotoCard photo={photo} />)}
-    </div>
-
-    <!-- フィルターで 0 件になったときの空表示 -->
-    <div id="no-results" class="hidden flex-col items-center justify-center py-24 text-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 160 140"
-        fill="none"
-        class="w-28 h-28 mb-6 text-gray-300 dark:text-gray-600"
-        aria-hidden="true"
-      >
-        <rect x="18" y="48" width="124" height="84" rx="10" fill="currentColor" opacity="0.35"/>
-        <rect x="48" y="34" width="36" height="18" rx="5" fill="currentColor" opacity="0.35"/>
-        <rect x="108" y="36" width="22" height="13" rx="3" fill="currentColor" opacity="0.25"/>
-        <circle cx="80" cy="90" r="32" fill="currentColor" opacity="0.25"/>
-        <circle cx="80" cy="90" r="21" fill="currentColor" opacity="0.35"/>
-        <circle cx="80" cy="90" r="12" fill="currentColor" opacity="0.45"/>
-        <circle cx="74" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
-        <circle cx="86" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
-        <path d="M73 97 Q80 92 87 97" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
-        <ellipse cx="71" cy="92" rx="2.5" ry="4" fill="#93C5FD" opacity="0.8"/>
-      </svg>
-      <p class="text-lg font-medium text-gray-500 dark:text-gray-400">写真がまだありません</p>
-      <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">申し訳ありません 🙇</p>
-    </div>
+<div>
+  <div class="masonry-grid" id="photo-grid">
+    <!-- Masonry.js が列幅の基準に使うサイザー要素 -->
+    <div class="grid-sizer" aria-hidden="true"></div>
   </div>
-)}
+
+  <!-- 無限スクロール用センチネル -->
+  <div id="scroll-sentinel" style="height:1px" aria-hidden="true"></div>
+
+  <!-- フィルターで 0 件になったときの空表示 -->
+  <div id="no-results" class="hidden flex-col items-center justify-center py-24 text-center">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 160 140"
+      fill="none"
+      class="w-28 h-28 mb-6 text-gray-300 dark:text-gray-600"
+      aria-hidden="true"
+    >
+      <rect x="18" y="48" width="124" height="84" rx="10" fill="currentColor" opacity="0.35"/>
+      <rect x="48" y="34" width="36" height="18" rx="5" fill="currentColor" opacity="0.35"/>
+      <rect x="108" y="36" width="22" height="13" rx="3" fill="currentColor" opacity="0.25"/>
+      <circle cx="80" cy="90" r="32" fill="currentColor" opacity="0.25"/>
+      <circle cx="80" cy="90" r="21" fill="currentColor" opacity="0.35"/>
+      <circle cx="80" cy="90" r="12" fill="currentColor" opacity="0.45"/>
+      <circle cx="74" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
+      <circle cx="86" cy="85" r="2.5" fill="currentColor" opacity="0.9"/>
+      <path d="M73 97 Q80 92 87 97" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+      <ellipse cx="71" cy="92" rx="2.5" ry="4" fill="#93C5FD" opacity="0.8"/>
+    </svg>
+    <p class="text-lg font-medium text-gray-500 dark:text-gray-400">写真がまだありません</p>
+    <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">申し訳ありません 🙇</p>
+  </div>
+</div>
 
 <style is:global>
-  /*
-   * Masonry.js レイアウト
-   * アイテムの横幅を % で指定し、Masonry.js が position:absolute で縦位置を計算する。
-   * gutter は 0 にして padding でギャップを表現することで、% 幅が正確に 3 等分になる。
-   */
-
   .masonry-grid {
     position: relative;
   }
@@ -80,13 +63,19 @@ const { photos } = Astro.props;
     }
   }
 
-  /* padding でギャップを作る（右・下） */
+  /* 4列（ワイドデスクトップ） */
+  @media (min-width: 1400px) {
+    .masonry-grid .grid-sizer,
+    .masonry-grid .masonry-item {
+      width: 25%;
+    }
+  }
+
   .masonry-grid .masonry-item {
     box-sizing: border-box;
     padding: 0 6px 12px;
   }
 
-  /* 写真カードの角丸・オーバーフロー制御 */
   .masonry-grid .masonry-item button {
     border-radius: 0.5rem;
     overflow: hidden;
@@ -106,7 +95,6 @@ const { photos } = Astro.props;
     transform: scale(1.03);
   }
 
-  /* 空状態 */
   #no-results { display: none; }
   #no-results.visible { display: flex; }
 </style>
@@ -131,19 +119,24 @@ const { photos } = Astro.props;
       gutter: 0,
     });
 
-    // 画像が 1 枚ロードされるたびに位置を再計算
     imagesLoaded(grid).on('progress', () => msnry?.layout());
   }
 
-  // フィルター・ソート後に gallery.astro から呼び出す
+  // フィルター変更時: Masonry を全再初期化
   (window as any).refreshLayout = () => {
     if (msnry) { msnry.destroy(); msnry = null; }
     initMasonry();
   };
 
+  // 無限スクロールで追記時: 差分のみ追加（効率的）
+  (window as any).appendLayout = (newItems: HTMLElement[]) => {
+    if (!msnry) { initMasonry(); return; }
+    msnry.appended(newItems);
+    imagesLoaded(newItems).on('progress', () => msnry?.layout());
+  };
+
   initMasonry();
 
-  // リサイズ時も再計算（デバウンス付き）
   let resizeTimer: ReturnType<typeof setTimeout>;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
